@@ -33,7 +33,7 @@ def initmodel():
         print(f"OpenAI API 오류: {e}")
         return None
 
-def isSpam(data):
+def isSpam(data: str) -> str:
     global model_settings
     try:
         response = client.chat.completions.create(
@@ -53,13 +53,8 @@ def isSpam(data):
         return None
 
 
-text = """[현대오토에버]
-[Web발신]
-[현대오토에버]
-안녕하세요, 현대오토에버입니다.
-"2024년 상반기 현대오토에버 신입사원 채용" 1차면접 전형 결과 안내드렸습니다.
-이메일 및 채용홈페이지 확인부탁드립니다.
-감사합니다."""
+text = """[국제발신]
+오빠는 친구가 될 수 있나요?한국에서 만나고 싶은데, 내 LINE:m203036"""
 
-print(initmodel())
+initmodel()
 print(isSpam(text))
