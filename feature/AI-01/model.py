@@ -1,23 +1,65 @@
-
 from openai import OpenAI
+import openai
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 api_key = os.getenv('OPENAI_API_KEY')
+
+if api_key is None:
+    raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+
 client = OpenAI(api_key=api_key)
 
-def get_llm_answer(data, MODEL = "gpt-4o-mini", NAME = '효민'):
-    # GPT API 호출
+model_settings = {
+    "model": "gpt-4o-mini",
+    "role_message": {"role": "system",
+                      "content":
+                      "너는 보안을 담당하고 스미싱이라는 스팸 문자 데이터들을 분류하는 역할을 할꺼야. 앞으로 너가 받는 문자 데이터들을 분석해서 스미싱 데이터인지 아닌지 판별해줘"
+                    }    
+}
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": "당신은 원격 은행원이자 금융 비서입니다. 당신은 최신 기술에 서툰 노인과 대화하고 있습니다. 그들이 원하는 것을 파악해서 응대하세요."},
-            {"role": "assistant", "content": "누구신가요?"},
-            {"role": "user", "content": f"{NAME}입니다."},
-        ],
-        temperature=0,
-    )
+def initmodel():
+    global model_settings
+    try:
+        response = client.chat.completions.create(
+            model=model_settings["model"],
+            messages=[model_settings["role_message"]],
+            temperature=0
+        )
+        return response
+    except openai.error.OpenAIError as e:
+        print(f"OpenAI API 오류: {e}")
+        return None
 
-    return response.choices[0].message.content
+def isSpam(data):
+    global model_settings
+    try:
+        response = client.chat.completions.create(
+            model=model_settings["model"],
+            messages=[
+                model_settings["role_message"],
+                {"role": "user", "content" : data}
+            ],
+            temperature=0
+        )
+
+        result = response.choices[0].message.content
+        return result
+
+    except openai.error.OpenAIError as e:
+        print(f"OpenAI API 오류: {e}")
+        return None
+
+
+text = """[현대오토에버]
+[Web발신]
+[현대오토에버]
+안녕하세요, 현대오토에버입니다.
+"2024년 상반기 현대오토에버 신입사원 채용" 1차면접 전형 결과 안내드렸습니다.
+이메일 및 채용홈페이지 확인부탁드립니다.
+감사합니다."""
+
+print(initmodel())
+print(isSpam(text))
