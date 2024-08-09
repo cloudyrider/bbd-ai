@@ -13,7 +13,7 @@ class MessageSummary:
         openai.api_key = self.api_key
 
         self.model_settings = {
-            "model": "gpt-4-turbo",
+            "model": "gpt-4o-mini",
             "role_message": {
                 "role": "system",
                 "content": "너는 지금부터 문자 데이터들을 요약하는 역할을 할꺼야. 너가 받은 문자 데이터를 바탕으로 "

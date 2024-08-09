@@ -13,6 +13,7 @@ classifier = model.SpamClassifier()
 classifier.initmodel()
 
 
+
 class MessageRequest(BaseModel):
     message: str
 
@@ -25,6 +26,9 @@ async def check_spam(request: MessageRequest):
         raise HTTPException(status_code=500, detail="스미싱 판별 중 오류가 발생했습니다.")
     return {"message": request.message, "is_spam": result}
 
+@app.post("/input")
+async def input_to_standard(request: MessageRequest):
+    result = 
 
 
 # 테스트용 엔드포인트
