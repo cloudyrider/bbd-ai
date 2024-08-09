@@ -56,4 +56,4 @@ if __name__ == "__main__":
 
     classifier = SpamClassifier()
     classifier.initmodel()
-    print(classifier.isSpam(text))
+    print(classifier.is_spam(text))
