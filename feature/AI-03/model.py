@@ -1,6 +1,6 @@
 import os
 import json
-import time  # 시간 측정을 위해 time 모듈 추가
+import time 
 from openai import OpenAI
 import requests
 from dotenv import load_dotenv
@@ -20,7 +20,8 @@ class TaskProcessor:
         self.client_standardization = OpenAI(api_key=API_KEY_FOR_STANDARDIZATION)
         self.client_extract = OpenAI(api_key=API_KEY_FOR_EXTRACT)
         self.tasks = self.load_tasks('tasks.txt')
-        self.messages = []  # 대화 기록을 저장할 리스트 초기화
+        self.tasks_length = len(self.tasks)
+        #self.messages = []  # 대화 기록 사용 시에 써야 함
 
     @staticmethod
     def load_tasks(file_path):
@@ -29,27 +30,28 @@ class TaskProcessor:
                 tasks = file.read().splitlines()
             return tasks
         except Exception as e:
-            print(f"An error occurred while loading tasks: {e}")
+            print(f"tasks.txt 불러오는 도중 오류 발생: {e}")
             return []
 
     def korean_standardization(self, command):
         try:
             # 대화 기록에 현재 입력된 사용자의 메시지를 추가
-            self.messages.append({"role": "user", "content": command})
+            # self.messages.append({"role": "user", "content": command})
 
             # 대화 기록을 바탕으로 표준화 요청
             response = self.client_standardization.chat.completions.create(
                 model=MODEL_STANDARDIZATION,
-                messages=self.messages + [
+                messages = [
                     {"role": "system", "content": "다음은 한국어를 소리 나는 대로 적은 것입니다. 만약 이것이 방언이라면 표준어로 바꾸세요."},
                     {"role": "user", "content": command},
                 ],
+                #messages = self.messages + messages
                 temperature=0,
             )
 
             # 표준화된 결과를 대화 기록에 추가
             standardized_response = response.choices[0].message.content
-            self.messages.append({"role": "assistant", "content": standardized_response})
+            # self.messages.append({"role": "assistant", "content": standardized_response})
 
             return standardized_response
         
@@ -67,28 +69,37 @@ class TaskProcessor:
 
             # 대화 기록을 바탕으로 요청 추출
             response = self.client_extract.chat.completions.create(
-                model=MODEL_EXTRACT,
-                messages=self.messages + [
-                    {"role": "system", "content": f"고객이 원하는 것은 다음 가운데 무엇입니까? 다음 중 하나를 골라 번호만 답하세요. {tasks_string}. 반드시 번호를 답하셔야 합니다."},
+                model = MODEL_EXTRACT,
+                messages = [
+                    {"role": "system", "content": "Q. 다음 중 고객이 원하는 것은?"},
+                    {"role": "user", "content": "내가 비염이 있는 거 같은데"},
+                    {"role": "system", "content": f"{tasks_string}"},
+                    {"role": "assistant", "content": "2"},
+                    {"role": "user", "content": "손자네에 좀 가고 싶어서"},
+                    {"role": "system", "content": f"{tasks_string}"},
+                    {"role": "assistant", "content": "7"},
                     {"role": "user", "content": std_command},
+                    {"role": "system", "content": f"{tasks_string}"},
                 ],
+                #messages = self.messages + messages
                 temperature=0,
+                max_tokens=10,
             )
+
+            #print(tasks_string)
 
             answer = response.choices[0].message.content.strip()
 
+            #print(answer)
             # 정규 표현식 패턴 매칭
-            if re.search(r'1|병원', answer):
-                answer = "병원예약"
-            elif re.search(r'2|택시', answer):
-                answer = "택시예약"
-            elif re.search(r'3|문자', answer):
-                answer = "문자요약"
-            else:
-                answer = "답이 없음"
+
+            for i in range(self.tasks_length - 1, -1, -1):
+                if re.search(rf'\b{i+1}\b', answer):
+                    answer = f"{i+1}"
+                    break
 
             # 추출된 결과를 대화 기록에 추가
-            self.messages.append({"role": "assistant", "content": answer})
+            # self.messages.append({"role": "assistant", "content": answer})
 
             return std_command, answer
 
