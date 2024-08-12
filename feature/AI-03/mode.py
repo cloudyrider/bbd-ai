@@ -2,7 +2,7 @@ import openai
 import os
 from dotenv import load_dotenv
 
-class MessageSummary:
+class Categroy:
     def __init__(self):
         load_dotenv()
         self.api_key = os.getenv('OPENAI_API_KEY')
@@ -33,7 +33,7 @@ class MessageSummary:
             print(f"OpenAI API 오류: {e}")
             return None
 
-    def get_summary(self, data: str) -> str:
+    def get_Category(self, data: str) -> str:
         try:
             response = openai.chat.completions.create(
                 model=self.model_settings["model"],
