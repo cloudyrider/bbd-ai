@@ -21,7 +21,7 @@ class TaskProcessor:
         self.client_extract = OpenAI(api_key=API_KEY_FOR_EXTRACT)
         self.tasks = self.load_tasks('tasks.txt')
         self.tasks_length = len(self.tasks)
-        self.messages = []  # 대화 기록 사용 시에 써야 함
+        self.messages = [] 
         self.max_tokens = 10
 
     @staticmethod
@@ -66,67 +66,52 @@ class TaskProcessor:
 
             if not std_command:
                 return None, "표준화 실패"
-
-            # 대화 기록을 바탕으로 요청 추출
-            response = self.client_extract.chat.completions.create(
-                model = MODEL_EXTRACT,
-                messages = self.messages + [
-                    {"role": "system", "content": "Q. 다음 중 고객이 원하는 것은? 만약 병원 관련된 답을 선택할 경우, 고객이 어디가 아픈지 확실하지 않다면 7번을 선택할 것."},
-                    {"role": "user", "content": "내가 비염이 있는 거 같은데"},
-                    {"role": "system", "content": f"{tasks_string}"},
-                    {"role": "assistant", "content": "1"},
-                    {"role": "user", "content": "손자네에 좀 가고 싶어서"},
-                    {"role": "system", "content": f"{tasks_string}"},
-                    {"role": "assistant", "content": "8"},
-                    {"role": "user", "content": std_command},
-                    {"role": "system", "content": f"{tasks_string}"},
-                ],
-                temperature=0,
-                max_tokens=self.max_tokens,
-            )
-
-            answer = response.choices[0].message.content.strip()
-
-            for i in range(self.tasks_length - 1, -1, -1):
-                if re.search(rf'\b{i+1}\b', answer):
-                    answer = f"{i+1}"
-                    break
-
-            #중요: 병원 종류를 모를 경우
-            if answer == "7": 
-                self.messages.append({"role": "assistant", "content": answer})
-                
-                follow_up_question = "어디가 아프신가요? 더 자세히 말씀해 주세요."
-                print(follow_up_question)
-                follow_up_response = input("사용자 응답: ")
-
-                follow_up_std_command = self.korean_standardization(follow_up_response)
-                
+            
+            messages = self.messages + [
+                {"role": "system", "content": "Q. 다음 중 고객이 원하는 것은? 만약 병원 관련된 답을 선택할 경우, 고객이 어디가 아픈지 확실하지 않다면 7번을 선택할 것."},
+                {"role": "user", "content": "내가 비염이 있는 거 같은데"},
+                {"role": "system", "content": f"{tasks_string}"},
+                {"role": "assistant", "content": "1"},
+                {"role": "user", "content": "손자네에 좀 가고 싶어서"},
+                {"role": "system", "content": f"{tasks_string}"},
+                {"role": "assistant", "content": "8"},
+                {"role": "user", "content": std_command},
+                {"role": "system", "content": f"{tasks_string}"},
+            ]
+            
+            while True:
                 response = self.client_extract.chat.completions.create(
                     model = MODEL_EXTRACT,
-                    messages = self.messages + [
-                        {"role": "user", "content": follow_up_std_command},
-                        {"role": "system", "content": f"{tasks_string}"},
-                    ],
+                    messages = messages,
                     temperature=0,
-                    max_tokens=10,
+                    max_tokens=self.max_tokens,
                 )
-                
-                final_answer = response.choices[0].message.content.strip()
+                answer = response.choices[0].message.content.strip()
 
                 for i in range(self.tasks_length - 1, -1, -1):
-                    if re.search(rf'\b{i+1}\b', final_answer):
-                        final_answer = f"{i+1}"
+                    if re.search(rf'\b{i+1}\b', answer):
+                        answer = f"{i+1}"
                         break
-                
-                return follow_up_std_command, final_answer
 
-            return std_command, answer
+                if answer == "7" or answer == "11" :
+                    follow_up_question = "어디가 아프신가요? 더 자세히 말씀해 주세요."
+                    print(follow_up_question)
+                    follow_up_response = input("명령을 입력하세요 (종료하려면 'exit' 입력): ")
+
+                else :
+                    return std_command, answer
+
+                std_command = self.korean_standardization(follow_up_response)
+
+                messages += [
+                    {"role": "user", "content": std_command},
+                    {"role": "system", "content": f"{tasks_string}"},
+                ]
 
         except Exception as e:
             print(f"요청 : {e}")
             return "답이 없음"
-    
+
 # TaskProcessor 클래스 사용 예시
 if __name__ == "__main__":
     processor = TaskProcessor()
@@ -147,3 +132,7 @@ if __name__ == "__main__":
 
         end_time = time.time()
         print(f"Total Time: {end_time - start_time:.2f} seconds")
+
+                        
+
+                
