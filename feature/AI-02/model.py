@@ -15,7 +15,7 @@ class MessageSummary:
             raise ValueError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
 
         openai.api_key = self.api_key
-
+        self.max_tokens = 150
         self.model_settings = {
             "model": prompt.model,
             "role_message": {
@@ -45,7 +45,8 @@ class MessageSummary:
                     self.model_settings["role_message"],
                     {"role": "user", "content": data}
                 ],
-                temperature=0
+                temperature=0,
+                max_tokens=self.max_tokens
             )
 
             end_time = time.time()  # End time
