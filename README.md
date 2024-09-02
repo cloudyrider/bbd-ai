@@ -21,8 +21,8 @@
 
 ## Team Introduction
 - **Team Name**: 비범대 (飛範大)
-- **Team Members**: Sim Hyun-woo, Kim Sung-hyun, Song Ju-young, Lee Hyo-min, Han Sung-wook
-- **Mentor**: Lee Joong-yoon (SKT)
+- **Team Members**: 심현우, 김성현, 송주영, 이효민, 한성욱
+- **Mentor**: 이중윤 (SKT)
 
 # Roles in the Project
 | Name        | Role        |  
